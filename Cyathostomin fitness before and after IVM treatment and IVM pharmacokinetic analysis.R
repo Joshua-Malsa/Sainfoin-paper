@@ -57,12 +57,12 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL){
 
 
 ## === Work file ===
-setwd("D:/R - (pc)")
+setwd()
 
 ###============================================================================
 ###=== Satisfaction of energy (UFC) and protein (MADC) requirements analysis ===
 ###============================================================================
-nrj=read.csv(file='Besoin couvert.CSV', header=TRUE, sep=';', dec=',')
+nrj=read.csv(file='Needs covered.CSV', header=TRUE, sep=',', dec='.')
 ufc<-nrj %>% select(-MADC_cover) #Keep only the data concerning UFC cover percentage
 madc<-nrj %>% select(-UFC_cover) #Keep only the data concerning MADC cover percentage
 ### === Graphs ===
@@ -160,7 +160,7 @@ summary(mod)
 ###=======================================================================
 ###=== FEC percentage between two groups before IVM treatment analysis ===
 ###=======================================================================
-xpsainfoin=read.csv(file='sainfoin_data.csv', header=TRUE, sep=';', dec=',')
+xpsainfoin=read.csv(file='sainfoin_data.csv', header=TRUE, sep=',', dec='.')
 xpsainfoin=xpsainfoin[xpsainfoin$Day!='d-7',]
 xpsainfoin$id=factor(xpsainfoin$ID) %>% as.numeric(xpsainfoin$id)
 
@@ -279,11 +279,11 @@ summary(gee.fit.Dev)
 ###========================================
 ###=== FEC after IVM treatment analysis ===
 ###========================================
-PostIvr=read.csv(file='Suivipostiver.csv', header=TRUE, dec=',', sep=';')
-PostIvr$id=factor(PostIvr$ID) %>% as.numeric(PostIvr$id)
+Postivm=read.csv(file='post_IVM_treatment.csv', header=TRUE, dec='.', sep=',')
+Postivm$id=factor(Postivm$ID) %>% as.numeric(Postivm$id)
 ### === Graphs ===
 #Boxplot
-PlotFECpost<-ggplot(PostIvr, aes(x = day ,y= EPG, fill=Group))+
+PlotFECpost<-ggplot(Postivm, aes(x = day ,y= EPG, fill=Group))+
   geom_boxplot(alpha=1, outlier.shape = NA, size=0.9, width=0.8)+
   geom_point(aes(x = day, y = EPG, fill = Group), size = 1.5, shape = 1,position = position_jitterdodge(0))+
   labs(y='FEC after IVM treatment \n (eggs per gram)', x="Days")+
@@ -304,10 +304,10 @@ PlotFECpost<-ggplot(PostIvr, aes(x = day ,y= EPG, fill=Group))+
   scale_x_discrete(labels=c("36", "50", "63", '71', '78'))
 
 ### === Statistical analysis of the effects of the diet on the FEC after IVM treatment ====
-mod.IVM <- lme(EPG~ day*Group, random = ~1|ID, data = PostIvr) 
+mod.IVM <- lme(EPG~ day*Group, random = ~1|ID, data = Postivm) 
 summary(mod.IVM)
 #Linear mixed-effects model fit by REML
-# Data: PostIvr 
+# Data: Postivm 
 #      AIC      BIC    logLik
 # 768.9599 795.9418 -372.4799
 # 
@@ -329,7 +329,7 @@ summary(mod.IVM)
 # dayd+50:GroupSainfoin 50.00  28.07038 56  1.7812370  0.0803
 # dayd+57:GroupSainfoin 56.25  28.07038 56  2.0038917  0.0499
 
-Sainfoin=PostIvr[PostIvr$Group=='Sainfoin',]
+Sainfoin=Postivm[Postivm$Group=='Sainfoin',]
 mod.IVM.Sainfoin <- lme(EPG ~ day, random = ~1|ID, data = Sainfoin)
 summary(mod.IVM.Sainfoin)
 # Linear mixed-effects model fit by REML
@@ -350,7 +350,7 @@ summary(mod.IVM.Sainfoin)
 # dayd+50     68.75  24.97767 28 2.752459  0.0103
 # dayd+57     87.50  24.97767 28 3.503129  0.0016
 
-Control=PostIvr[PostIvr$Group=='Control',]
+Control=Postivm[Postivm$Group=='Control',]
 mod.IVM.Control <- lme(EPG ~ day,random = ~1|ID, data = Control)
 summary(mod.IVM.Control)
 # Linear mixed-effects model fit by REML
@@ -374,10 +374,10 @@ summary(mod.IVM.Control)
 ###==========================================
 ###=== IVM concentration and AUC analysis ===
 ###==========================================
-PKivr=read.csv(file='PK Ivr.csv',header=TRUE, dec=',', sep=';')
+PKivm=read.csv(file='PK_IVM.csv',header=TRUE, dec='.', sep=',')
 
 ### === Graphs ===
-Pk<- data_summary(PKivr, varname="Dosage",groupnames=c("Assay", "Time_hour"))
+Pk<- data_summary(PKivm, varname="Dosage",groupnames=c("Assay", "Time_hour"))
 
 PlotPK<-ggplot(Pk, aes(x=Time_hour, y=Dosage, colour=Assay))+ 
   geom_line(linetype = "solid", size = 1)+
@@ -409,25 +409,25 @@ bxp <- ggboxplot(
 bxp
 
 #Identify outliers
-PKivr %>%
+PKivm %>%
   group_by(Assay) %>%
   identify_outliers(Dosage)
 # Assay   Horses       Time_hour Dosage is.outlier is.extreme
 # 1 Control Iegadelavega      24   10.2 TRUE       FALSE  
 
 #Check for normality
-PKivr %>%
+PKivm %>%
   group_by(Assay) %>%
   shapiro_test(Dosage)
 # Assay    variable statistic        p
 # 1 Control  Dosage       0.932 0.000953
 # 2 Sainfoin Dosage       0.941 0.00245 
-ggqqplot(PKivr, x = "Dosage", facet.by = "Assay")
+ggqqplot(PKivm, x = "Dosage", facet.by = "Assay")
 
 #Mann-Whitney U test
-test=PKivr[PKivr$Time_hour!="0",]
+test=PKivm[PKivm$Time_hour!="0",]
 
-stat.test <- PKivr %>%
+stat.test <- PKivm %>%
   group_by(Time_hour) %>%
   wilcox_test(Dosage ~ Assay)%>%
   adjust_pvalue(method = "bonferroni") %>%
@@ -443,7 +443,7 @@ stat.test
 # 6        96 Dosage Control Sainfoin    10    10      85   0.00908  0.0545  ns
 
 ### === Areas under the concentration-time curves (AUC) determined ====
-PKivrO<-PKivr[order(PKivr$Horses),]
+PKivrO<-PKivm[order(PKivm$Horses),]
 df = PKivrO %>% data.table::dcast(Time_hour ~ Horses, value.var = 'Dosage')
 df$Time_hour=NULL
 dfl<-as.list(df)
@@ -451,7 +451,7 @@ dfl<-as.list(df)
 AUC<-list()
 mytime<-c(0,1,2,24,48,72,96)
 
-DF=data.frame(Horses=PKivr[c(1:20),1],Group=PKivr[c(1:20),2],AUC="x")
+DF=data.frame(Horses=PKivr[c(1:20),1],Group=PKivm[c(1:20),2],AUC="x")
 DF<-DF[order(DF$Horses),]
 
 d=0
@@ -521,7 +521,3 @@ stat.test
 # 1 AUC   Control Sainfoin    10    10      4.17  16.0 0.000727 0.000727 ***   
 #=============================================
       
-
-
-
-
